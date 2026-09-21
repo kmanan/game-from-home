@@ -30,6 +30,7 @@ public sealed class Preferences
 public static class Formatting
 {
     public const double GiB = 1073741824d;
+    public static string AppRam(long bytes) => bytes >= 1_000_000_000 ? $"{bytes / 1_000_000_000d:F1} GB" : $"{bytes / 1_000_000d:F0} MB";
     public static string Ram(long bytes) => bytes >= GiB ? $"{bytes / GiB:F1} GiB" : $"{bytes / 1048576d:F0} MiB";
     public static string Delta(long bytes) => Math.Abs(bytes) < GiB / 20 ? "No measurable change" : $"{(bytes > 0 ? "+" : "−")}{Math.Abs(bytes) / GiB:F1} GiB available RAM";
 }

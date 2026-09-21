@@ -1,3 +1,7 @@
+# v0.2.1 threshold verification
+
+The build passed with zero warnings/errors. The native screen was inspected with live data: only four grouped entries above 500,000,000 bytes appeared; smaller entries were excluded from the selection. The shutdown implementation is unchanged from the 35-check v0.2.0 validation below.
+
 # Validation — v0.2.0
 
 Validated on Windows 11 x64, 21 September 2026. Application, core, and fixtures build with zero warnings/errors. **35 regression checks passed**; see [test-results.json](test-results.json).

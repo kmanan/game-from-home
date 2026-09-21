@@ -1,6 +1,6 @@
-# Architecture — v0.2.0
+# Architecture — v0.2.1
 
-The WPF interface shows a searchable, virtualized inventory sorted by private working set. Idle scans run every five seconds while visible. There is no resident service or global hotkey listener.
+The WPF interface shows only entries above 500,000,000 bytes of private working set, sorted largest first. App grouping occurs before filtering. Below-threshold entries do not enter the selection or one-click cleanup; the cleanup verifier still receives the full discovered inventory. App row units are decimal MB/GB to match the threshold. Idle scans run every five seconds while visible. There is no resident service or global hotkey listener.
 
 ## Discovery and ownership
 
@@ -8,7 +8,7 @@ Toolhelp enumerates process IDs and parents. Native inspection obtains creation 
 
 Runtime executables are not swept into a desktop app merely by parentage. Codex-owned binaries under its installation/runtime directory are associated only through a verified Codex ancestor. Standalone or user-launched runtimes remain separately visible. Raw command lines are read transiently only for Bun/Node worker identification; they are not displayed, stored in profiles, or written to diagnostics.
 
-Everything not grouped remains a visible process row. Other-user, service/system, inaccessible, and unadapted background processes are inspection-only. Windows performance counters supply private working set where direct inspection is unavailable; these values are cached for approximately ten seconds. Unknown memory stays unknown. Drivers and kernel pools cannot all be attributed to individual processes; the overall physical-memory counter remains the reference total.
+Everything not grouped remains a process entry, visible when above the threshold. Other-user, service/system, inaccessible, and unadapted background processes are inspection-only. Windows performance counters supply private working set where direct inspection is unavailable; these values are cached for approximately ten seconds. Unknown memory stays unknown. Drivers and kernel pools cannot all be attributed to individual processes; the overall physical-memory counter remains the reference total.
 
 ## Selection and closure
 

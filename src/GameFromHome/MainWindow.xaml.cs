@@ -15,6 +15,7 @@ namespace GameFromHome;
 
 public partial class MainWindow : Window
 {
+    private const long MinimumVisibleRam = 500_000_000;
     private readonly Discovery discovery=new();
     private readonly ProfileStore store;
     private readonly Preferences preferences;
@@ -51,7 +52,7 @@ public partial class MainWindow : Window
         try
         {
             var snapshots=await Task.Run(discovery.Scan);var memory=Discovery.ReadMemory();DisplayMemory(memory);
-            var visible=snapshots.ToList();
+            var visible=snapshots.Where(s=>s.Ram>MinimumVisibleRam).ToList();
             if(rebuild)
             {
                 rows.Clear(); foreach(var snap in visible)
@@ -74,10 +75,10 @@ public partial class MainWindow : Window
                 foreach(var snap in visible.Where(s=>rows.All(r=>r.Id!=s.Id))) {var row=new AppRow{Snapshot=snap,Selected=false,CanSelect=snap.CanClose};Populate(row);row.PropertyChanged+=RowChanged;rows.Add(row);}
             }
             EmptyText.Visibility=rows.Count==0?Visibility.Visible:Visibility.Collapsed;
-            var protectedApps=snapshots.Where(s=>s.Definition.Protected).Select(s=>$"{s.Definition.Name} stays open · {(s.MemoryComplete?"":"at least ")}{Formatting.Ram(s.Ram)}");
+            var protectedApps=snapshots.Where(s=>s.Definition.Protected && s.Ram>MinimumVisibleRam).Select(s=>$"{s.Definition.Name} stays open · {(s.MemoryComplete?"":"at least ")}{Formatting.Ram(s.Ram)}");
             ProtectedText.Text=string.Join("     •     ",protectedApps);
             if(string.IsNullOrEmpty(ProtectedText.Text))ProtectedText.Text="Discord stays protected. Codex is optional and closes last when selected.";
-            if(discovery.InaccessibleCandidates>0)ShowNotice("Some process details are inaccessible. Affected apps are skipped rather than guessed.");
+
             CollectionViewSource.GetDefaultView(rows).Refresh();
             UpdateSummary();
         }
@@ -97,7 +98,7 @@ public partial class MainWindow : Window
     private static void Populate(AppRow row)
     {
         var snap=row.Snapshot;
-        row.MemoryText=snap.Processes.All(p=>p.PrivateWorkingSet is null)?"Unknown":(snap.MemoryComplete?"":"≥ ")+Formatting.Ram(snap.Ram);
+        row.MemoryText=snap.Processes.All(p=>p.PrivateWorkingSet is null)?"Unknown":(snap.MemoryComplete?"":"≥ ")+Formatting.AppRam(snap.Ram);
         row.Status=snap.Definition.Protected?"Protected · stays open":snap.Definition.ExitMethod==ExitMethod.InspectOnly?snap.Context:!snap.Complete?$"{snap.UnreadableCount} process identities unavailable; skipped":snap.Id=="claude-mem"?"Stop worker through its own API · may restart when used":snap.Id=="codex"?$"{snap.Processes.Count} processes · optional; interrupts active tasks":$"{snap.Processes.Count} processes · clean exit request";
         row.StatusBrush=new SolidColorBrush(Color.FromRgb(173,181,165));
     }
@@ -136,7 +137,7 @@ public partial class MainWindow : Window
             {
                 var row=rows.First(r=>r.Id==result.AppId);row.Status=result.Detail;
                 bool closed=result.Status is ExitStatus.Closed or ExitStatus.AlreadyClosed;
-                row.MemoryText=closed?"Closed":result.RemainingRam>0?Formatting.Ram(result.RemainingRam):row.MemoryText;
+                row.MemoryText=closed?"Closed":result.RemainingRam>0?Formatting.AppRam(result.RemainingRam):row.MemoryText;
                 row.StatusBrush=new SolidColorBrush(closed?Color.FromRgb(171,214,168):Color.FromRgb(255,189,131));
             }
             int closedCount=report.Apps.Count(a=>a.Status==ExitStatus.Closed);int remainder=report.Apps.Count(a=>a.Status is not (ExitStatus.Closed or ExitStatus.AlreadyClosed));
@@ -160,7 +161,7 @@ public partial class MainWindow : Window
     }
     private async Task CloseLaterAsync(CancellationToken token){try{await Task.Delay(8000,token);Close();}catch(OperationCanceledException){}}
     private async void PrimaryClick(object sender,RoutedEventArgs e){if(finished)Close();else await RunAsync();}
-    private async void RefreshClick(object sender,RoutedEventArgs e){autoExit?.Cancel();finished=false;Headline.Text="Make room for play.";Subtitle.Text="Quit your everyday apps in one go.";Eyebrow.Text="WORK WRAPPED. PLAY NEXT.";ListTitle.Text="Apps and background processes";PrimaryButton.Content="Free up RAM";Notice.Visibility=Visibility.Collapsed;await RefreshAsync(true);timer.Start();}
+    private async void RefreshClick(object sender,RoutedEventArgs e){autoExit?.Cancel();finished=false;Headline.Text="Make room for play.";Subtitle.Text="Quit your everyday apps in one go.";Eyebrow.Text="WORK WRAPPED. PLAY NEXT.";ListTitle.Text="Using over 500 MB";PrimaryButton.Content="Free up RAM";Notice.Visibility=Visibility.Collapsed;await RefreshAsync(true);timer.Start();}
     private void StopClick(object sender,RoutedEventArgs e){cancel?.Cancel();StopButton.IsEnabled=false;Summary.Text="Stopping new requests; verifying any exits already requested…";}
     private void PreferencesClick(object sender,RoutedEventArgs e){autoExit?.Cancel();PreferencesPanel.Visibility=PreferencesPanel.Visibility==Visibility.Visible?Visibility.Collapsed:Visibility.Visible;}
     private void AutoExitChanged(object sender,RoutedEventArgs e){if(!initialized)return;preferences.AutoExit=AutoExitCheck.IsChecked==true;try{store.Save(preferences);}catch(Exception ex){ShowNotice("Could not save preference: "+ex.Message);}}
