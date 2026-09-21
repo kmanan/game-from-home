@@ -1,19 +1,22 @@
 <p align="center"><img src="docs/assets/app-icon.png" width="112" alt="Game From Home icon"></p>
 <h1 align="center">Game From Home</h1>
 <p align="center"><strong>Make room for play.</strong><br>Clean app exits. More available RAM.</p>
-<p align="center"><a href="https://github.com/kmanan/game-from-home/releases/tag/v0.1.0">Download for Windows</a> · <a href="docs/ARCHITECTURE.md">How it works</a> · <a href="docs/SPEC.md">Product spec</a> · <a href="LICENSE">MIT license</a></p>
+<p align="center"><a href="https://github.com/kmanan/game-from-home/releases/tag/v0.2.0">Download for Windows</a> · <a href="docs/ARCHITECTURE.md">How it works</a> · <a href="docs/SPEC.md">Product spec</a> · <a href="LICENSE">MIT license</a></p>
 
 Game From Home is a small, on-demand Windows utility for the moment you want to stop working and start playing. See which everyday apps are using RAM, close a remembered selection with one button, and see the measured change in available memory.
 
-**Discord stays open. So does Codex.** Apps that decline a clean exit are left running and reported honestly.
+**Discord stays open. Codex is your choice.** Codex starts unchecked and closes last when selected. Apps that decline a clean exit are left running and reported honestly.
 
 ![Game From Home showing app memory and its Free up RAM button](docs/assets/app-screenshot.png)
 
 ## What it does
 
-- Groups processes into recognizable apps and shows their private RAM usage.
+- Shows recognized apps, discovered desktop apps, background runtimes, and system processes sorted by private RAM usage.
+- Search by name, runtime, parent process, PID, or executable path.
+- Uses a virtualized list so hundreds of processes do not require hundreds of rendered rows.
 - Remembers the apps you choose to close.
 - Requests cooperative shutdown through Windows, with forced termination disabled.
+- Identifies the default-profile claude-mem worker and uses its own local shutdown endpoint after verifying its identity.
 - Checks that app processes actually exited, including tracked helpers.
 - Reports available RAM before and after, including zero or negative changes.
 - Supports a one-click shortcut or Stream Deck launcher.
@@ -23,7 +26,7 @@ It does not manage game libraries, change priorities, stop drivers, purge caches
 
 ## Download and run
 
-Get **[GameFromHome-windows-x64.zip](https://github.com/kmanan/game-from-home/releases/download/v0.1.0/GameFromHome-windows-x64.zip)** from the [v0.1.0 release](https://github.com/kmanan/game-from-home/releases/tag/v0.1.0). Extract the complete folder and open `GameFromHome.exe`.
+Get **[GameFromHome-windows-x64.zip](https://github.com/kmanan/game-from-home/releases/download/v0.2.0/GameFromHome-windows-x64.zip)** from the [v0.2.0 release](https://github.com/kmanan/game-from-home/releases/tag/v0.2.0). Extract the complete folder and open `GameFromHome.exe`.
 
 This initial build requires **Windows x64 and the .NET 9 Desktop Runtime**. It has no installer, but it is not fully self-contained: companion files must stay together, and settings live in `%LOCALAPPDATA%\GameFromHome`. The runtime is available from [Microsoft](https://dotnet.microsoft.com/en-us/download/dotnet/9.0). This release is unsigned.
 
@@ -45,12 +48,17 @@ With no saved selection, this opens the review screen. Successful results can cl
 |---|---|
 | Microsoft Edge, Teams, Zoom, Cursor | Known installation identities; cooperative Windows exit requests |
 | WhatsApp, ChatGPT, Claude | Known installation rules; more distribution/version coverage needed |
-| Discord and Codex | Always protected |
-| Unknown apps, services, drivers, arbitrary developer runtimes | Excluded |
+| Codex | Selectable; unchecked until approved; closes last |
+| Discord | Visible, always protected |
+| Other desktop apps with a visible window | Discovered automatically; opt-in cooperative exit |
+| claude-mem worker | Bun/Node worker identified from command, PID file, and same-user identity; app-specific shutdown |
+| Other Bun, Node, Python and background processes | Visible with RAM, PID and parent; read-only until a clean-exit method is supported |
+| System and service processes | Visible where Windows permits; read-only |
+| Drivers, kernel pools, caches, inaccessible memory | Included in overall system usage; not all attributable to individual rows |
 
-`ChatGPT.exe` inside a Codex package is identified as **Codex**. Generic Node, Bun, Python, shell, and WSL processes are never selected just because of their names or because they descend from an editor.
+`ChatGPT.exe` inside a Codex package is identified as **Codex**. Generic Node, Bun, Python, shell, and WSL processes are visible, but are never selected just because of their names or because they descend from an editor. App-owned Codex runtime helpers are grouped through verified ancestry and the Codex installation path. A standalone Codex CLI remains a separate runtime. Hover a row for executable paths and process IDs.
 
-**v0.1.0 is an initial release.** Controlled tests cover normal apps, hidden apps, vetoed shutdowns, protected identities, and remaining children. Individual versions of every third-party app have not been closed as part of validation. Each app controls how it handles Windows shutdown requests; Game From Home checks and reports the outcome. It does not provide universal session backup or restore.
+**v0.2.0 expands discovery beyond the original app list.** Controlled tests cover normal apps, hidden apps, vetoed shutdowns, protected identities, and remaining children. Individual versions of every third-party app have not been closed as part of validation. Each app controls how it handles Windows shutdown requests; Game From Home checks and reports the outcome. It does not provide universal session backup or restore.
 
 ## How clean exit works
 
@@ -58,7 +66,9 @@ Windows Restart Manager is called with `flags = 0`. Exact process instances are 
 
 An app may decline or fail to finish. A five-second observation checks original process instances, tracked helpers, and relaunches. A closed window alone does not count as success.
 
-Per-app values are **private working set**, not private commit or summed shared working sets. The result is the signed difference between median available-memory samples. Other Windows activity can affect this change, so selected usage is not guaranteed savings.
+The claude-mem adapter supports the default `~/.claude-mem/worker.pid` profile and `worker-service.cjs` layout. It validates the PID/creation time, Bun/Node command, TCP listener ownership, and `/api/health` PID before POSTing `/api/admin/shutdown`. Redirects and proxies are disabled. Other versions or custom data directories remain visible as runtimes if not recognized. Hooks may start a stopped worker again. There is no force-kill fallback.
+
+Per-app values are **private working set**, not private commit or summed shared working sets. Windows performance counters provide read-only memory values for processes such as Memory Compression when direct process inspection is unavailable; these refresh approximately every ten seconds. Unknown values say “Unknown”. The result is the signed difference between median available-memory samples. Other Windows activity can affect this change, so selected usage is not guaranteed savings.
 
 ## Build
 
@@ -69,7 +79,7 @@ The repository pins .NET SDK **9.0.318**. It uses C#, WPF, Win32 interop, and no
 ./build.ps1 -Test
 ```
 
-The second command runs the disposable Windows fixture suite. Teardown may terminate only a test-owned refusing fixture; production code has no force-kill path. The included CI template builds every project and runs checks that do not need interactive fixtures. It is not yet active in GitHub Actions. See [validation results](docs/VALIDATION.md).
+The second command runs the disposable Windows fixture suite. Teardown may terminate only a test-owned refusing fixture; production code has no force-kill path. The included CI template builds every project and runs checks that do not need interactive fixtures. It is not yet active in GitHub Actions. See [validation results](docs/VALIDATION.md). **35 regression checks passed** for this release.
 
 ```text
 src/GameFromHome/           Native UI, icons, preferences, shortcuts
@@ -78,6 +88,10 @@ tests/GameFromHome.Tests/   Regression harness
 tests/GameFromHome.Fixture/ Disposable Windows test applications
 docs/                      Design, architecture, validation, social assets
 ```
+
+## Updating from v0.1.0
+
+Replace the extracted app files with this release. Existing profiles are retained, but the expanded installation fingerprint requires one review of previously selected apps. Codex and newly discovered apps are not silently added to your cleanup.
 
 ## Roadmap
 

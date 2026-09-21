@@ -5,6 +5,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
@@ -18,7 +19,7 @@ public partial class MainWindow : Window
     private readonly ProfileStore store;
     private readonly Preferences preferences;
     private readonly ObservableCollection<AppRow> rows=[];
-    private readonly DispatcherTimer timer=new(){Interval=TimeSpan.FromSeconds(2)};
+    private readonly DispatcherTimer timer=new(){Interval=TimeSpan.FromSeconds(5)};
     private readonly bool autoRun;
     private readonly string? capture;
     private CancellationTokenSource? cancel;
@@ -32,6 +33,7 @@ public partial class MainWindow : Window
         MinWidth=Math.Min(MinWidth,MaxWidth);MinHeight=Math.Min(MinHeight,MaxHeight);
         Width=Math.Min(Width,MaxWidth);Height=Math.Min(Height,MaxHeight);
         AutoExitCheck.IsChecked=preferences.AutoExit; AppList.ItemsSource=rows;
+        var view=CollectionViewSource.GetDefaultView(rows);view.Filter=MatchesSearch;view.SortDescriptions.Add(new SortDescription(nameof(AppRow.MemoryBytes),ListSortDirection.Descending));
         PreferencesNote.Text="One-click shortcuts use your last approved app selection.";
         timer.Tick+=async(_,_)=>{if(WindowState!=WindowState.Minimized&&!busy&&!finished)await RefreshAsync(false);};
         Loaded+=async(_,_)=> {
@@ -49,43 +51,54 @@ public partial class MainWindow : Window
         try
         {
             var snapshots=await Task.Run(discovery.Scan);var memory=Discovery.ReadMemory();DisplayMemory(memory);
-            var visible=snapshots.Where(s=>!s.Definition.Protected).ToList();
+            var visible=snapshots.ToList();
             if(rebuild)
             {
                 rows.Clear(); foreach(var snap in visible)
                 {
                     bool approved=preferences.ApprovedFingerprints.TryGetValue(snap.Id,out var fingerprint)&&fingerprint==snap.Fingerprint;
-                    var row=new AppRow{Snapshot=snap,Selected=snap.Complete&&(!preferences.Configured || preferences.SelectedApps.Contains(snap.Id)&&approved),CanSelect=snap.Complete};
+                    var row=new AppRow{Snapshot=snap,Selected=snap.CanClose&&(!preferences.Configured ? snap.Definition.DefaultSelected : preferences.SelectedApps.Contains(snap.Id)&&approved),CanSelect=snap.CanClose};
                     Populate(row);row.PropertyChanged+=RowChanged;rows.Add(row);
                     if(preferences.Configured&&preferences.SelectedApps.Contains(snap.Id)&&!approved)row.Status="App installation changed; select to approve again.";
                 }
             }
             else
             {
-                foreach(var row in rows)
+                foreach(var row in rows.ToArray())
                 {
                     var snap=visible.FirstOrDefault(a=>a.Id==row.Id);
-                    if(snap is null) {row.Selected=false;row.CanSelect=false;row.Status="Not running";row.MemoryText="—";continue;}
+                    if(snap is null) {rows.Remove(row);continue;}
                     if(row.Snapshot.Fingerprint!=snap.Fingerprint){row.Selected=false;row.Status="App installation changed. Refresh to review.";row.CanSelect=false;continue;}
-                    row.Snapshot=snap;Populate(row);row.CanSelect=snap.Complete;if(!snap.Complete)row.Selected=false;
+                    row.Snapshot=snap;Populate(row);row.CanSelect=snap.CanClose;if(!snap.CanClose)row.Selected=false;
                 }
-                if(visible.Any(s=>rows.All(r=>r.Id!=s.Id)))ShowNotice("Another app started. Refresh to review it; it will not be added to this cleanup automatically.");
+                foreach(var snap in visible.Where(s=>rows.All(r=>r.Id!=s.Id))) {var row=new AppRow{Snapshot=snap,Selected=false,CanSelect=snap.CanClose};Populate(row);row.PropertyChanged+=RowChanged;rows.Add(row);}
             }
             EmptyText.Visibility=rows.Count==0?Visibility.Visible:Visibility.Collapsed;
             var protectedApps=snapshots.Where(s=>s.Definition.Protected).Select(s=>$"{s.Definition.Name} stays open · {(s.MemoryComplete?"":"at least ")}{Formatting.Ram(s.Ram)}");
             ProtectedText.Text=string.Join("     •     ",protectedApps);
-            if(string.IsNullOrEmpty(ProtectedText.Text))ProtectedText.Text="Discord and Codex are not running. Both remain protected.";
+            if(string.IsNullOrEmpty(ProtectedText.Text))ProtectedText.Text="Discord stays protected. Codex is optional and closes last when selected.";
             if(discovery.InaccessibleCandidates>0)ShowNotice("Some process details are inaccessible. Affected apps are skipped rather than guessed.");
+            CollectionViewSource.GetDefaultView(rows).Refresh();
             UpdateSummary();
         }
         catch(Exception ex){ShowNotice("Could not refresh app details: "+ex.Message);PrimaryButton.IsEnabled=false;}
         finally{refreshing=false;}
     }
+    private bool MatchesSearch(object value)
+    {
+        if(value is not AppRow row)return false;
+        var text=SearchBox.Text.Trim();
+        return text.Length==0 || row.Name.Contains(text,StringComparison.OrdinalIgnoreCase) || row.Details.Contains(text,StringComparison.OrdinalIgnoreCase);
+    }
+    private void SearchChanged(object sender,TextChangedEventArgs e)
+    {
+        if(initialized)CollectionViewSource.GetDefaultView(rows).Refresh();
+    }
     private static void Populate(AppRow row)
     {
         var snap=row.Snapshot;
-        row.MemoryText=(snap.MemoryComplete?"":"≥ ")+Formatting.Ram(snap.Ram);
-        row.Status=snap.Complete?$"{snap.Processes.Count} processes · clean exit request":$"{snap.UnreadableCount} process identities unavailable; skipped";
+        row.MemoryText=snap.Processes.All(p=>p.PrivateWorkingSet is null)?"Unknown":(snap.MemoryComplete?"":"≥ ")+Formatting.Ram(snap.Ram);
+        row.Status=snap.Definition.Protected?"Protected · stays open":snap.Definition.ExitMethod==ExitMethod.InspectOnly?snap.Context:!snap.Complete?$"{snap.UnreadableCount} process identities unavailable; skipped":snap.Id=="claude-mem"?"Stop worker through its own API · may restart when used":snap.Id=="codex"?$"{snap.Processes.Count} processes · optional; interrupts active tasks":$"{snap.Processes.Count} processes · clean exit request";
         row.StatusBrush=new SolidColorBrush(Color.FromRgb(173,181,165));
     }
     private void RowChanged(object? sender,PropertyChangedEventArgs e){if(e.PropertyName==nameof(AppRow.Selected)&&!busy&&!finished)UpdateSummary();}
@@ -93,7 +106,7 @@ public partial class MainWindow : Window
     {
         if(busy||finished)return;var selected=rows.Where(r=>r.Selected&&r.CanSelect).ToArray();
         Summary.Text=$"{selected.Length} apps selected · {Formatting.Ram(selected.Sum(r=>r.Snapshot.Ram))} in use";
-        SummaryNote.Text="Normal exits. No forced shutdowns.";PrimaryButton.IsEnabled=selected.Length>0;
+        SummaryNote.Text="Select apps to close. Grey rows show memory but have no clean-exit action.";PrimaryButton.IsEnabled=selected.Length>0;
     }
     private void DisplayMemory(MemorySample sample)
     {
@@ -111,7 +124,7 @@ public partial class MainWindow : Window
         foreach(var snap in approved)preferences.ApprovedFingerprints[snap.Id]=snap.Fingerprint;
         try{store.Save(preferences);}catch(Exception ex){ShowNotice("Could not save your selection: "+ex.Message);return;}
         busy=true;finished=false;timer.Stop();autoExit?.Cancel();cancel=new();
-        foreach(var row in rows){row.CanSelect=false;if(!row.Selected)row.Status="Kept open";}
+        foreach(var row in rows){row.CanSelect=false;if(!row.Selected && row.Snapshot.CanClose)row.Status="Kept open";}
         RefreshButton.IsEnabled=false;PreferencesButton.IsEnabled=false;PreferencesPanel.Visibility=Visibility.Collapsed;Notice.Visibility=Visibility.Collapsed;
         StopButton.Visibility=Visibility.Visible;StopButton.IsEnabled=true;PrimaryButton.IsEnabled=false;PrimaryButton.Content="Closing apps…";
         Headline.Text="Wrapping things up.";Subtitle.Text="Giving each app time to exit cleanly.";Eyebrow.Text="FREEING UP RAM";
@@ -128,7 +141,7 @@ public partial class MainWindow : Window
             }
             int closedCount=report.Apps.Count(a=>a.Status==ExitStatus.Closed);int remainder=report.Apps.Count(a=>a.Status is not (ExitStatus.Closed or ExitStatus.AlreadyClosed));
             Headline.Text=report.AllClosed?"Room to play.":"Some apps stayed open.";
-            Subtitle.Text=$"{closedCount} apps closed cleanly. Discord and Codex were left untouched.";
+            Subtitle.Text=$"{closedCount} apps closed cleanly. Discord was left untouched.";
             Eyebrow.Text=report.AllClosed?"YOU’RE ALL SET":"FINISHED WITH EXCEPTIONS";ListTitle.Text="Your cleanup results";
             if(report.After is not null)DisplayMemory(report.After);
             Summary.Text=report.Delta is long delta?Formatting.Delta(delta):"RAM change unavailable";
@@ -147,7 +160,7 @@ public partial class MainWindow : Window
     }
     private async Task CloseLaterAsync(CancellationToken token){try{await Task.Delay(8000,token);Close();}catch(OperationCanceledException){}}
     private async void PrimaryClick(object sender,RoutedEventArgs e){if(finished)Close();else await RunAsync();}
-    private async void RefreshClick(object sender,RoutedEventArgs e){autoExit?.Cancel();finished=false;Headline.Text="Make room for play.";Subtitle.Text="Quit your everyday apps in one go.";Eyebrow.Text="WORK WRAPPED. PLAY NEXT.";ListTitle.Text="Apps to close";PrimaryButton.Content="Free up RAM";Notice.Visibility=Visibility.Collapsed;await RefreshAsync(true);timer.Start();}
+    private async void RefreshClick(object sender,RoutedEventArgs e){autoExit?.Cancel();finished=false;Headline.Text="Make room for play.";Subtitle.Text="Quit your everyday apps in one go.";Eyebrow.Text="WORK WRAPPED. PLAY NEXT.";ListTitle.Text="Apps and background processes";PrimaryButton.Content="Free up RAM";Notice.Visibility=Visibility.Collapsed;await RefreshAsync(true);timer.Start();}
     private void StopClick(object sender,RoutedEventArgs e){cancel?.Cancel();StopButton.IsEnabled=false;Summary.Text="Stopping new requests; verifying any exits already requested…";}
     private void PreferencesClick(object sender,RoutedEventArgs e){autoExit?.Cancel();PreferencesPanel.Visibility=PreferencesPanel.Visibility==Visibility.Visible?Visibility.Collapsed:Visibility.Visible;}
     private void AutoExitChanged(object sender,RoutedEventArgs e){if(!initialized)return;preferences.AutoExit=AutoExitCheck.IsChecked==true;try{store.Save(preferences);}catch(Exception ex){ShowNotice("Could not save preference: "+ex.Message);}}

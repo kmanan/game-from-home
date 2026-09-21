@@ -14,8 +14,36 @@ Check("PID reuse is not the same instance",!Discovery.SameInstance(probe,probe w
 Check("Path change is not the same instance",!Discovery.SameInstance(probe,probe with{Path=@"C:\other\test.exe"}));
 var profilePath=Path.Combine(AppContext.BaseDirectory,"profile-test-"+Guid.NewGuid().ToString("N"));var store=new ProfileStore(profilePath);
 store.Save(new Preferences{Configured=true,SelectedApps=["edge","discord","codex","unknown"]});
-Check("Protected and unknown IDs stripped from saved profiles",store.Load().SelectedApps.SequenceEqual(["edge"]));
+Check("Discord and unknown IDs stripped; Codex selection retained",store.Load().SelectedApps.SequenceEqual(["edge","codex"]));
 File.WriteAllText(Path.Combine(profilePath,"preferences.json"),"broken");Check("Corrupt profile fails into review",!store.Load().Configured&&store.LoadWarning is not null);
+Check("Codex is selectable but opt-in",Catalog.Apps.Single(a=>a.Id=="codex") is {Protected:false,DefaultSelected:false});
+Check("Codex package is not hard-protected",!Catalog.ProtectedPath(@"C:\Program Files\WindowsApps\OpenAI.Codex_1_x64__id\app\ChatGPT.exe"));
+Check("Bun and Node are recognized as runtimes",ProcessContext.IsRuntime("BUN.EXE")&&ProcessContext.IsRuntime("node.exe"));
+Check("claude-mem worker command is recognized",ProcessContext.IsClaudeMemWorker("bun.exe",@"bun C:\plugins\claude-mem\13.25.2\scripts\worker-service.cjs --daemon"));
+Check("Unrelated Bun project is not claude-mem",!ProcessContext.IsClaudeMemWorker("bun.exe",@"bun C:\projects\server.ts"));
+Check("Unrelated runtime cannot spoof worker by name",!ProcessContext.IsClaudeMemWorker("python.exe",@"C:\claude-mem\scripts\worker-service.cjs"));
+Check("Worker health must match exact PID",ClaudeMem.HealthMatches("{\"pid\":123,\"status\":\"ok\",\"version\":\"1\"}",123)&&!ClaudeMem.HealthMatches("{\"pid\":124,\"status\":\"ok\",\"version\":\"1\"}",123));
+Check("Malformed health is rejected",!ClaudeMem.HealthMatches("invalid",123)&&!ClaudeMem.HealthMatches("{\"pid\":123}",123));
+Check("Discovered app identity is path scoped",ProcessContext.AppId(@"C:\Apps\tool.exe")!=ProcessContext.AppId(@"C:\Other\tool.exe"));
+var dynamicId=ProcessContext.AppId(@"C:\Apps\tool.exe");
+store.Save(new Preferences{Configured=true,SelectedApps=[dynamicId],ApprovedFingerprints=new(){{dynamicId,"reviewed-installation"}}});
+Check("Approved discovered app survives profile reload",store.Load().SelectedApps.SequenceEqual([dynamicId]));
+store.Save(new Preferences{Configured=true,SelectedApps=[dynamicId]});
+Check("Unapproved discovered app is not restored",store.Load().SelectedApps.Count==0);
+var readonlySnapshot=new AppSnapshot(new("process:test","Runtime","B",["bun.exe"],ExitMethod:ExitMethod.InspectOnly),[probe],true);
+var readonlyResult=await new CleanupService(new Discovery()).CloseAsync(readonlySnapshot,null,CancellationToken.None,1);
+Check("Read-only runtime cannot issue an exit request",!readonlySnapshot.CanClose&&readonlyResult.Status==ExitStatus.StillRunning);
+var scan=new Discovery().Scan();
+Check("Inventory includes the running test process",scan.Any(a=>a.Processes.Any(p=>p.Pid==Environment.ProcessId)));
+Check("Inventory does not double count PIDs",scan.SelectMany(a=>a.Processes).GroupBy(p=>p.Pid).All(g=>g.Count()==1));
+Check("All protected or inspection-only rows cannot close",scan.Where(a=>a.Definition.Protected||a.Definition.ExitMethod==ExitMethod.InspectOnly).All(a=>!a.CanClose));
+var listener=new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback,0);
+listener.Start();
+int listenPort=((System.Net.IPEndPoint)listener.LocalEndpoint).Port;
+Check("TCP ownership accepts exact local listener",ClaudeMem.OwnsListener(Environment.ProcessId,listenPort));
+Check("TCP ownership rejects another PID",!ClaudeMem.OwnsListener(Environment.ProcessId+1,listenPort));
+listener.Stop();
+Check("Closed TCP listener is not authorized",!ClaudeMem.OwnsListener(Environment.ProcessId,listenPort));
 string? fixture=args.FirstOrDefault();
 if(fixture is not null)
 {

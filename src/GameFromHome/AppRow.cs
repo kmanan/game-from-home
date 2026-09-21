@@ -9,9 +9,11 @@ public sealed class AppRow : INotifyPropertyChanged
     public required AppSnapshot Snapshot {get;set;}
     public string Id=>Snapshot.Id;
     public string Name=>Snapshot.Definition.Name;
+    public long MemoryBytes=>Snapshot.Ram;
     public string Initials=>Snapshot.Definition.Initials;
     public string AccessibleName=>"Close "+Name;
-    public ImageSource? AppIcon=>AppIcons.For(Snapshot.Processes.First(p=>Snapshot.Definition.Executables.Contains(p.Name,StringComparer.OrdinalIgnoreCase)).Path);
+    public string Details=>Snapshot.Context+"\n"+string.Join("\n",Snapshot.Processes.Select(p=>$"PID {p.Pid}: {p.Path}"));
+    public ImageSource? AppIcon=>Snapshot.Processes.FirstOrDefault(p=>!string.IsNullOrEmpty(p.Path)) is {} p ? AppIcons.For(p.Path) : null;
     public bool Selected {get=>selected;set{selected=value;Changed();}}
     public bool CanSelect {get=>canSelect;set{canSelect=value;Changed();}}
     public string Status {get=>status;set{status=value;Changed();}}

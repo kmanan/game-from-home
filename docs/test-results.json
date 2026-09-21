@@ -35,12 +35,102 @@
     "detail": null
   },
   {
-    "name": "Protected and unknown IDs stripped from saved profiles",
+    "name": "Discord and unknown IDs stripped; Codex selection retained",
     "passed": true,
     "detail": null
   },
   {
     "name": "Corrupt profile fails into review",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "Codex is selectable but opt-in",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "Codex package is not hard-protected",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "Bun and Node are recognized as runtimes",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "claude-mem worker command is recognized",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "Unrelated Bun project is not claude-mem",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "Unrelated runtime cannot spoof worker by name",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "Worker health must match exact PID",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "Malformed health is rejected",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "Discovered app identity is path scoped",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "Approved discovered app survives profile reload",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "Unapproved discovered app is not restored",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "Read-only runtime cannot issue an exit request",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "Inventory includes the running test process",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "Inventory does not double count PIDs",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "All protected or inspection-only rows cannot close",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "TCP ownership accepts exact local listener",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "TCP ownership rejects another PID",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "Closed TCP listener is not authorized",
     "passed": true,
     "detail": null
   },
@@ -75,7 +165,7 @@
       "AppId": "fixture",
       "Name": "Fixture",
       "Status": 3,
-      "Detail": "App declined exit or needs attention.",
+      "Detail": "The app declined or did not finish its exit.",
       "WindowsCode": 351,
       "RemainingRam": 0
     }

@@ -11,10 +11,10 @@ public static class Catalog
         new("chatgpt", "ChatGPT", "G", ["chatgpt.exe"]),
         new("claude", "Claude", "C", ["claude.exe"]),
         new("discord", "Discord", "D", ["discord.exe", "discordptb.exe", "discordcanary.exe"], true),
-        new("codex", "Codex", "◈", ["chatgpt.exe", "codex.exe"], true)
+        new("codex", "Codex", "◈", ["chatgpt.exe", "codex.exe"], DefaultSelected: false),
+        new("claude-mem", "claude-mem worker (Bun)", "M", ["bun.exe", "node.exe"], ExitMethod: ExitMethod.ClaudeMem, DefaultSelected: false)
     ];
     public static bool ProtectedPath(string path) =>
-        path.Contains("\\OpenAI.Codex_", StringComparison.OrdinalIgnoreCase) ||
         path.Contains("\\Discord\\", StringComparison.OrdinalIgnoreCase) ||
         path.Contains("\\DiscordPTB\\", StringComparison.OrdinalIgnoreCase) ||
         path.Contains("\\DiscordCanary\\", StringComparison.OrdinalIgnoreCase) ||

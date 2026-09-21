@@ -1,13 +1,15 @@
 namespace GameFromHome.Core;
 
-public sealed record AppDefinition(string Id, string Name, string Initials, string[] Executables, bool Protected = false);
+public enum ExitMethod { Cooperative, ClaudeMem, InspectOnly }
+public sealed record AppDefinition(string Id, string Name, string Initials, string[] Executables, bool Protected = false, ExitMethod ExitMethod = ExitMethod.Cooperative, bool DefaultSelected = true);
 public sealed record ProcessIdentity(int Pid, long Created, string Path, int ParentPid, int SessionId, string Name, long? PrivateWorkingSet);
-public sealed record AppSnapshot(AppDefinition Definition, IReadOnlyList<ProcessIdentity> Processes, bool Complete, int UnreadableCount = 0)
+public sealed record AppSnapshot(AppDefinition Definition, IReadOnlyList<ProcessIdentity> Processes, bool Complete, int UnreadableCount = 0, string Context = "", int? ServicePort = null)
 {
     public string Id => Definition.Id;
     public long Ram => Processes.Sum(p => p.PrivateWorkingSet ?? 0);
-    public bool MemoryComplete => Complete && Processes.All(p => p.PrivateWorkingSet.HasValue);
-    public string Fingerprint => string.Join("|", Processes.Where(p=>Definition.Executables.Contains(p.Name,StringComparer.OrdinalIgnoreCase)).Select(p => p.Path.ToLowerInvariant()).Distinct().Order());
+    public bool MemoryComplete => (Complete || Definition.ExitMethod==ExitMethod.InspectOnly) && Processes.All(p => p.PrivateWorkingSet.HasValue);
+    public bool CanClose => Complete && !Definition.Protected && Definition.ExitMethod != ExitMethod.InspectOnly;
+    public string Fingerprint => Definition.ExitMethod+"|"+ServicePort+"|"+string.Join("|", Processes.Select(p => p.Path.ToLowerInvariant()).Distinct().Order());
 }
 public sealed record MemorySample(DateTimeOffset At, long Available, long Total);
 public enum ExitStatus { Closed, AlreadyClosed, Protected, StillRunning, Relaunched, AccessUnavailable, Canceled, Failed }

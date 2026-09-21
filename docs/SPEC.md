@@ -2,7 +2,7 @@
 
 Product and implementation specification · v0.1 · 21 September 2026
 
-**Implementation update:** A native Windows v0.1.0 build is available in GitHub Releases, with source in `src/`. The design below records the original intended scope. The [implementation README](../README.md) documents the delivered behavior: Windows Restart Manager with force disabled supplies a common cooperative shutdown path; app-owned processes are verified afterward. This replaces the initial assumption that every app needs a separate menu-automation adapter. Discord and Codex are both protected. Live detection and disposable-fixture tests passed; third-party app versions were not closed as part of development. The native build uses .NET 9 and a dark theme. Broader theme/app-version coverage remains listed in that README.
+**Implementation update (v0.2.0):** The [implementation README](../README.md) describes the current app. Codex is now selectable and opt-in; Discord remains protected. Discovery includes unknown desktop apps, background runtimes and system processes. The identified claude-mem worker has its own shutdown adapter. Other processes without a verified clean-exit method stay visible as read-only rows. The original design below is historical and may describe behavior superseded by the current implementation.
 
 **One button to cleanly quit everyday apps and see RAM become available.**
 

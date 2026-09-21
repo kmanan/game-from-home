@@ -23,7 +23,7 @@ public partial class App : Application
         string data=Arg("--data-dir")??Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"GameFromHome");
         if(e.Args.Contains("--diagnose"))
         {
-            try { var discovery=new Discovery(); var apps=discovery.Scan(); File.WriteAllText(Arg("--output")??Path.Combine(Environment.CurrentDirectory,"gfh-diagnostics.json"),JsonSerializer.Serialize(new{Memory=Discovery.ReadMemory(),Apps=apps,discovery.InaccessibleCandidates},new JsonSerializerOptions{WriteIndented=true})); Shutdown(0); }
+            try { var discovery=new Discovery(); var apps=discovery.Scan(); File.WriteAllText(Arg("--output")??Path.Combine(Environment.CurrentDirectory,"gfh-diagnostics.json"),JsonSerializer.Serialize(new{Memory=Discovery.ReadMemory(),Apps=apps,discovery.InaccessibleCandidates,ProcessContext.LastQueryError},new JsonSerializerOptions{WriteIndented=true})); Shutdown(0); }
             catch(Exception ex) { File.WriteAllText(Arg("--output")??"gfh-diagnostics.json",ex.ToString()); Shutdown(1); }
             return;
         }

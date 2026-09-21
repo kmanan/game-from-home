@@ -1,9 +1,11 @@
-# Validation — v0.1.0
+# Validation — v0.2.0
 
-Validated on Windows 11 x64, 21 September 2026. The app, core, and fixtures built with zero compiler errors or warnings. **17 regression checks passed**; see [test-results.json](test-results.json).
+Validated on Windows 11 x64, 21 September 2026. Application, core, and fixtures build with zero warnings/errors. **35 regression checks passed**; see [test-results.json](test-results.json).
 
-Coverage includes normal/hidden cooperative exits, vetoes, protected apps, incomplete identity, PID reuse, remaining children, canceled runs, path collisions, corrupt profiles, and signed memory deltas. Third-party apps were inspected read-only; individual versions were not all closed during development.
+Checks cover normal/hidden exits, vetoes, protected targets, incomplete/stale identities, remaining children, cancellation, profile validation, Codex opt-in selection, runtime/worker classification, health PID matching, local TCP ownership, and deduplicated discovery. Only disposable test-owned apps were closed.
 
-The native screen was rendered with real process/memory data to check layout and icons. Its values are a snapshot, not a benchmark or savings promise. Production code contains no process force-termination or OS reboot path.
+Read-only live verification found Codex, the installed claude-mem 13.25.2 worker, Bun/Node processes, discovered desktop apps, WSL, and Memory Compression. The worker health endpoint matched its PID; no live worker shutdown was requested. Actual Codex and claude-mem shutdown remain untested in this session to avoid interrupting the user's work. The worker adapter has no forced fallback.
 
-The workflow template in `ci/windows-build.yml` compiles fixtures but runs headless checks only. It is not active in GitHub Actions. Full fixture tests need an interactive Windows desktop session and run via `build.ps1 -Test`.
+The native UI was rendered with real process/memory data. Its values are a snapshot, not a benchmark. Searchable virtualized rows show the broader inventory without rendering every row at once. Individual versions of every third-party app are not certified for cooperative exit.
+
+The workflow template in `ci/windows-build.yml` is included but is not active in GitHub Actions. Full disposable fixture tests run via `build.ps1 -Test`.

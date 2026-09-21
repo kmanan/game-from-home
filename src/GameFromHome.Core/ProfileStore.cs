@@ -9,7 +9,7 @@ public sealed class ProfileStore(string directory)
     public Preferences Load()
     {
         var file=Path.Combine(DirectoryPath,"preferences.json"); if(!File.Exists(file))return new();
-        try { var p=JsonSerializer.Deserialize<Preferences>(File.ReadAllText(file)) ?? throw new JsonException(); if(p.SchemaVersion!=1 || p.SelectedApps is null || p.ApprovedFingerprints is null)throw new JsonException(); p.SelectedApps=p.SelectedApps.Distinct().Where(id=>Catalog.Apps.Any(a=>a.Id==id&&!a.Protected)).ToList(); return p; }
+        try { var p=JsonSerializer.Deserialize<Preferences>(File.ReadAllText(file)) ?? throw new JsonException(); if(p.SchemaVersion!=1 || p.SelectedApps is null || p.ApprovedFingerprints is null)throw new JsonException(); p.SelectedApps=p.SelectedApps.Distinct().Where(id=>Catalog.Apps.Any(a=>a.Id==id&&!a.Protected) || (id.StartsWith("app:",StringComparison.Ordinal) && id.Length==68 && id[4..].All(Uri.IsHexDigit) && p.ApprovedFingerprints.ContainsKey(id))).ToList(); return p; }
         catch(Exception e) when(e is JsonException or IOException or UnauthorizedAccessException) { LoadWarning="Saved preferences could not be read. Review selections before closing apps."; return new(); }
     }
     public void Save(Preferences preferences)=>Write("preferences.json",preferences);
