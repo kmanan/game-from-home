@@ -34,7 +34,7 @@ public partial class MainWindow : Window
         MinWidth=Math.Min(MinWidth,MaxWidth);MinHeight=Math.Min(MinHeight,MaxHeight);
         Width=Math.Min(Width,MaxWidth);Height=Math.Min(Height,MaxHeight);
         AutoExitCheck.IsChecked=preferences.AutoExit; AppList.ItemsSource=rows;
-        var view=CollectionViewSource.GetDefaultView(rows);view.Filter=MatchesSearch;view.SortDescriptions.Add(new SortDescription(nameof(AppRow.MemoryBytes),ListSortDirection.Descending));
+        var view=CollectionViewSource.GetDefaultView(rows);view.SortDescriptions.Add(new SortDescription(nameof(AppRow.MemoryBytes),ListSortDirection.Descending));
         PreferencesNote.Text="One-click shortcuts use your last approved app selection.";
         timer.Tick+=async(_,_)=>{if(WindowState!=WindowState.Minimized&&!busy&&!finished)await RefreshAsync(false);};
         Loaded+=async(_,_)=> {
@@ -82,16 +82,6 @@ public partial class MainWindow : Window
         }
         catch(Exception ex){ShowNotice("Could not refresh app details: "+ex.Message);PrimaryButton.IsEnabled=false;}
         finally{refreshing=false;}
-    }
-    private bool MatchesSearch(object value)
-    {
-        if(value is not AppRow row)return false;
-        var text=SearchBox.Text.Trim();
-        return text.Length==0 || row.Name.Contains(text,StringComparison.OrdinalIgnoreCase) || row.Details.Contains(text,StringComparison.OrdinalIgnoreCase);
-    }
-    private void SearchChanged(object sender,TextChangedEventArgs e)
-    {
-        if(initialized)CollectionViewSource.GetDefaultView(rows).Refresh();
     }
     private static void Populate(AppRow row)
     {

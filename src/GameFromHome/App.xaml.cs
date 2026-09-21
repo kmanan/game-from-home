@@ -35,6 +35,14 @@ public partial class App : Application
         }
         DispatcherUnhandledException+=(_,args)=>{MessageBox.Show("Game From Home stopped this action.\n\n"+args.Exception.Message,"Game From Home",MessageBoxButton.OK,MessageBoxImage.Error);args.Handled=true;Shutdown(1);};
         var window=new MainWindow(new ProfileStore(data),e.Args.Contains("--run-profile"),capture);
+        if(capture is not null)
+        {
+            // Render verification screenshots without a second on-screen window or taskbar entry.
+            window.ShowActivated=false;
+            window.ShowInTaskbar=false;
+            window.WindowStartupLocation=WindowStartupLocation.Manual;
+            window.Left=-32000;window.Top=-32000;
+        }
         MainWindow=window; window.Show();
         await Task.CompletedTask;
     }

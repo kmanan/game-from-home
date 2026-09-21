@@ -1,7 +1,7 @@
 <p align="center"><img src="docs/assets/app-icon.png" width="112" alt="Game From Home icon"></p>
 <h1 align="center">Game From Home</h1>
 <p align="center"><strong>Make room for play.</strong><br>Clean app exits. More available RAM.</p>
-<p align="center"><a href="https://github.com/kmanan/game-from-home/releases/tag/v0.2.2">Download for Windows</a> · <a href="docs/ARCHITECTURE.md">How it works</a> · <a href="docs/SPEC.md">Product spec</a> · <a href="LICENSE">MIT license</a></p>
+<p align="center"><a href="https://github.com/kmanan/game-from-home/releases/tag/v0.2.3">Download for Windows</a> · <a href="docs/ARCHITECTURE.md">How it works</a> · <a href="docs/SPEC.md">Product spec</a> · <a href="LICENSE">MIT license</a></p>
 
 Game From Home is a small, on-demand Windows utility for the moment you want to stop working and start playing. See which everyday apps are using RAM, close a remembered selection with one button, and see the measured change in available memory.
 
@@ -13,7 +13,6 @@ Game From Home is a small, on-demand Windows utility for the moment you want to 
 
 - Shows only apps with a supported clean-exit method using **more than 500 MB** (500,000,000 bytes), largest first. App processes are grouped before applying the threshold.
 - Entries below the threshold are omitted from both the list and one-click cleanup, even if previously selected. Discovery still inspects the full process inventory to verify exits.
-- Search by name, runtime, parent process, PID, or executable path.
 - Uses a virtualized list so hundreds of processes do not require hundreds of rendered rows.
 - Remembers the apps you choose to close.
 - Requests cooperative shutdown through Windows, with forced termination disabled.
@@ -27,7 +26,7 @@ It does not manage game libraries, change priorities, stop drivers, purge caches
 
 ## Download and run
 
-Get **[GameFromHome-windows-x64.zip](https://github.com/kmanan/game-from-home/releases/download/v0.2.2/GameFromHome-windows-x64.zip)** from the [v0.2.2 release](https://github.com/kmanan/game-from-home/releases/tag/v0.2.2). Extract the complete folder and open `GameFromHome.exe`.
+Get **[GameFromHome-windows-x64.zip](https://github.com/kmanan/game-from-home/releases/download/v0.2.3/GameFromHome-windows-x64.zip)** from the [v0.2.3 release](https://github.com/kmanan/game-from-home/releases/tag/v0.2.3). Extract the complete folder and open `GameFromHome.exe`.
 
 This initial build requires **Windows x64 and the .NET 9 Desktop Runtime**. It has no installer, but it is not fully self-contained: companion files must stay together, and settings live in `%LOCALAPPDATA%\GameFromHome`. The runtime is available from [Microsoft](https://dotnet.microsoft.com/en-us/download/dotnet/9.0). This release is unsigned.
 
@@ -59,7 +58,7 @@ With no saved selection, this opens the review screen. Successful results can cl
 
 `ChatGPT.exe` inside a Codex package is identified as **Codex**. Generic Node, Bun, Python, shell, and WSL processes without a supported clean-exit method are excluded from the cleanup list. App-owned Codex runtime helpers are grouped through verified ancestry and the Codex installation path. A standalone Codex CLI remains a separate runtime. Hover a row for executable paths and process IDs.
 
-**v0.2.2 keeps the cleanup list focused on actionable apps over 500 MB.** Controlled tests cover normal apps, hidden apps, vetoed shutdowns, protected identities, and remaining children. Individual versions of every third-party app have not been closed as part of validation. Each app controls how it handles Windows shutdown requests; Game From Home checks and reports the outcome. It does not provide universal session backup or restore.
+**v0.2.3 keeps the cleanup list focused on actionable apps over 500 MB.** Controlled tests cover normal apps, hidden apps, vetoed shutdowns, protected identities, and remaining children. Individual versions of every third-party app have not been closed as part of validation. Each app controls how it handles Windows shutdown requests; Game From Home checks and reports the outcome. It does not provide universal session backup or restore.
 
 ## How clean exit works
 

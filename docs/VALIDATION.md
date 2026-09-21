@@ -1,3 +1,7 @@
+# v0.2.3 interface and window verification
+
+Release build passed with zero warnings/errors. Native screenshot confirms the search field is removed. During an eight-second normal-start observation, the app owned exactly one visible window; a duplicate launch exited without creating a window. Screenshot capture now renders offscreen without a taskbar entry or activation; native window bounds verified it stayed offscreen. The user-reported blank popup was not reproduced during normal startup, so its source remains unconfirmed. No user applications were closed during these checks.
+
 # v0.2.2 actionable-list verification
 
 The Release build passed with zero warnings/errors. The native screen was rendered with live process data and visually inspected: Edge, Codex, and Teams above 500 MB appeared; Memory Compression, Discord, and other non-closable entries did not. No user apps were closed during verification. The shutdown implementation is unchanged.
