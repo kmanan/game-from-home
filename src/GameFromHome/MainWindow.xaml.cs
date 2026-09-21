@@ -52,7 +52,7 @@ public partial class MainWindow : Window
         try
         {
             var snapshots=await Task.Run(discovery.Scan);var memory=Discovery.ReadMemory();DisplayMemory(memory);
-            var visible=snapshots.Where(s=>s.Ram>MinimumVisibleRam).ToList();
+            var visible=snapshots.Where(s=>s.CanClose && s.Ram>MinimumVisibleRam).ToList();
             if(rebuild)
             {
                 rows.Clear(); foreach(var snap in visible)
@@ -75,9 +75,7 @@ public partial class MainWindow : Window
                 foreach(var snap in visible.Where(s=>rows.All(r=>r.Id!=s.Id))) {var row=new AppRow{Snapshot=snap,Selected=false,CanSelect=snap.CanClose};Populate(row);row.PropertyChanged+=RowChanged;rows.Add(row);}
             }
             EmptyText.Visibility=rows.Count==0?Visibility.Visible:Visibility.Collapsed;
-            var protectedApps=snapshots.Where(s=>s.Definition.Protected && s.Ram>MinimumVisibleRam).Select(s=>$"{s.Definition.Name} stays open · {(s.MemoryComplete?"":"at least ")}{Formatting.Ram(s.Ram)}");
-            ProtectedText.Text=string.Join("     •     ",protectedApps);
-            if(string.IsNullOrEmpty(ProtectedText.Text))ProtectedText.Text="Discord stays protected. Codex is optional and closes last when selected.";
+            ProtectedText.Text="Discord stays open. Codex closes last when selected.";
 
             CollectionViewSource.GetDefaultView(rows).Refresh();
             UpdateSummary();
@@ -107,7 +105,7 @@ public partial class MainWindow : Window
     {
         if(busy||finished)return;var selected=rows.Where(r=>r.Selected&&r.CanSelect).ToArray();
         Summary.Text=$"{selected.Length} apps selected · {Formatting.Ram(selected.Sum(r=>r.Snapshot.Ram))} in use";
-        SummaryNote.Text="Select apps to close. Grey rows show memory but have no clean-exit action.";PrimaryButton.IsEnabled=selected.Length>0;
+        SummaryNote.Text="Clean exit requests. Apps that decline stay open.";PrimaryButton.IsEnabled=selected.Length>0;
     }
     private void DisplayMemory(MemorySample sample)
     {

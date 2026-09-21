@@ -1,3 +1,7 @@
+# v0.2.2 actionable-list verification
+
+The Release build passed with zero warnings/errors. The native screen was rendered with live process data and visually inspected: Edge, Codex, and Teams above 500 MB appeared; Memory Compression, Discord, and other non-closable entries did not. No user apps were closed during verification. The shutdown implementation is unchanged.
+
 # v0.2.1 threshold verification
 
 The build passed with zero warnings/errors. The native screen was inspected with live data: only four grouped entries above 500,000,000 bytes appeared; smaller entries were excluded from the selection. The shutdown implementation is unchanged from the 35-check v0.2.0 validation below.
