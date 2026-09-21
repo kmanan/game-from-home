@@ -1,0 +1,136 @@
+[
+  {
+    "name": "Codex process is not ChatGPT",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "Random name collision is excluded",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "Discord protection is path based",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "Negative RAM delta is honest",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "Available RAM is within usable physical memory",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "PID reuse is not the same instance",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "Path change is not the same instance",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "Protected and unknown IDs stripped from saved profiles",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "Corrupt profile fails into review",
+    "passed": true,
+    "detail": null
+  },
+  {
+    "name": "Cooperative exit closes normal fixture",
+    "passed": true,
+    "detail": {
+      "AppId": "fixture",
+      "Name": "Fixture",
+      "Status": 0,
+      "Detail": "Exited cleanly.",
+      "WindowsCode": 0,
+      "RemainingRam": 0
+    }
+  },
+  {
+    "name": "Cooperative exit closes hidden/tray-style fixture",
+    "passed": true,
+    "detail": {
+      "AppId": "fixture",
+      "Name": "Fixture",
+      "Status": 0,
+      "Detail": "Exited cleanly.",
+      "WindowsCode": 0,
+      "RemainingRam": 0
+    }
+  },
+  {
+    "name": "App veto remains running",
+    "passed": true,
+    "detail": {
+      "AppId": "fixture",
+      "Name": "Fixture",
+      "Status": 3,
+      "Detail": "App declined exit or needs attention.",
+      "WindowsCode": 351,
+      "RemainingRam": 0
+    }
+  },
+  {
+    "name": "Protected fixture receives no shutdown",
+    "passed": true,
+    "detail": {
+      "AppId": "fixture",
+      "Name": "Fixture",
+      "Status": 2,
+      "Detail": "Protected; no exit request sent.",
+      "WindowsCode": null,
+      "RemainingRam": 0
+    }
+  },
+  {
+    "name": "Incomplete identity skips shutdown",
+    "passed": true,
+    "detail": {
+      "AppId": "fixture",
+      "Name": "Fixture",
+      "Status": 5,
+      "Detail": "Some app process identities are unavailable. No request sent.",
+      "WindowsCode": null,
+      "RemainingRam": 0
+    }
+  },
+  {
+    "name": "Stale PID identity leaves real process untouched",
+    "passed": true,
+    "detail": {
+      "AppId": "fixture",
+      "Name": "Fixture",
+      "Status": 1,
+      "Detail": "Already closed.",
+      "WindowsCode": null,
+      "RemainingRam": 0
+    }
+  },
+  {
+    "name": "Remaining child prevents false success",
+    "passed": true,
+    "detail": {
+      "AppId": "fixture",
+      "Name": "Fixture",
+      "Status": 3,
+      "Detail": "Still running; no forced shutdown used.",
+      "WindowsCode": 0,
+      "RemainingRam": 0
+    }
+  },
+  {
+    "name": "Canceled run sends no new exit request",
+    "passed": true,
+    "detail": null
+  }
+]

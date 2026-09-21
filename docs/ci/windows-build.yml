@@ -1,0 +1,38 @@
+name: Windows build
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+      DOTNET_NOLOGO: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: '9.0.318'
+      - name: Build native application
+        run: dotnet build src/GameFromHome/GameFromHome.csproj -c Release
+      - name: Compile disposable fixtures
+        run: dotnet build tests/GameFromHome.Fixture/GameFromHome.Fixture.csproj -c Release
+      - name: Build regression checks
+        run: dotnet build tests/GameFromHome.Tests/GameFromHome.Tests.csproj -c Release
+      - name: Run noninteractive checks
+        run: ./tests/GameFromHome.Tests/bin/Release/net9.0-windows/GameFromHome.Tests.exe
+      - name: Publish Windows package
+        run: dotnet publish src/GameFromHome/GameFromHome.csproj -c Release --no-restore --self-contained false -o artifacts/windows-x64
+      - name: Include documentation
+        run: Copy-Item README.md,LICENSE artifacts/windows-x64/
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: GameFromHome-windows-x64
+          path: artifacts/windows-x64/
+          if-no-files-found: error

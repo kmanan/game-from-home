@@ -1,0 +1,96 @@
+<p align="center"><img src="docs/assets/app-icon.png" width="112" alt="Game From Home icon"></p>
+<h1 align="center">Game From Home</h1>
+<p align="center"><strong>Make room for play.</strong><br>Clean app exits. More available RAM.</p>
+<p align="center"><a href="https://github.com/kmanan/game-from-home/releases/tag/v0.1.0">Download for Windows</a> · <a href="docs/ARCHITECTURE.md">How it works</a> · <a href="docs/SPEC.md">Product spec</a> · <a href="LICENSE">MIT license</a></p>
+
+Game From Home is a small, on-demand Windows utility for the moment you want to stop working and start playing. See which everyday apps are using RAM, close a remembered selection with one button, and see the measured change in available memory.
+
+**Discord stays open. So does Codex.** Apps that decline a clean exit are left running and reported honestly.
+
+![Game From Home showing app memory and its Free up RAM button](docs/assets/app-screenshot.png)
+
+## What it does
+
+- Groups processes into recognizable apps and shows their private RAM usage.
+- Remembers the apps you choose to close.
+- Requests cooperative shutdown through Windows, with forced termination disabled.
+- Checks that app processes actually exited, including tracked helpers.
+- Reports available RAM before and after, including zero or negative changes.
+- Supports a one-click shortcut or Stream Deck launcher.
+- Exits completely when finished. No service, startup task, resident hotkey listener, account, or telemetry.
+
+It does not manage game libraries, change priorities, stop drivers, purge caches, or promise higher FPS.
+
+## Download and run
+
+Get **[GameFromHome-windows-x64.zip](https://github.com/kmanan/game-from-home/releases/download/v0.1.0/GameFromHome-windows-x64.zip)** from the [v0.1.0 release](https://github.com/kmanan/game-from-home/releases/tag/v0.1.0). Extract the complete folder and open `GameFromHome.exe`.
+
+This initial build requires **Windows x64 and the .NET 9 Desktop Runtime**. It has no installer, but it is not fully self-contained: companion files must stay together, and settings live in `%LOCALAPPDATA%\GameFromHome`. The runtime is available from [Microsoft](https://dotnet.microsoft.com/en-us/download/dotnet/9.0). This release is unsigned.
+
+Review the selected apps and press **Free up RAM**. The selection is remembered. New or changed installations require review before entering the saved selection.
+
+### One-click shortcut
+
+After approving a selection, **Preferences → Create one-click shortcut** creates a launcher beside the app. Stream Deck can also launch:
+
+```text
+GameFromHome.exe --run-profile default --show-result
+```
+
+With no saved selection, this opens the review screen. Successful results can close automatically after eight seconds; partial results remain visible.
+
+## App compatibility
+
+| App | Current behavior |
+|---|---|
+| Microsoft Edge, Teams, Zoom, Cursor | Known installation identities; cooperative Windows exit requests |
+| WhatsApp, ChatGPT, Claude | Known installation rules; more distribution/version coverage needed |
+| Discord and Codex | Always protected |
+| Unknown apps, services, drivers, arbitrary developer runtimes | Excluded |
+
+`ChatGPT.exe` inside a Codex package is identified as **Codex**. Generic Node, Bun, Python, shell, and WSL processes are never selected just because of their names or because they descend from an editor.
+
+**v0.1.0 is an initial release.** Controlled tests cover normal apps, hidden apps, vetoed shutdowns, protected identities, and remaining children. Individual versions of every third-party app have not been closed as part of validation. Each app controls how it handles Windows shutdown requests; Game From Home checks and reports the outcome. It does not provide universal session backup or restore.
+
+## How clean exit works
+
+Windows Restart Manager is called with `flags = 0`. Exact process instances are registered using PID and creation time. No files or services are registered, and the affected-process list is checked before shutdown. Forced termination is disabled. The program never asks Windows to reboot or restarts apps afterward.
+
+An app may decline or fail to finish. A five-second observation checks original process instances, tracked helpers, and relaunches. A closed window alone does not count as success.
+
+Per-app values are **private working set**, not private commit or summed shared working sets. The result is the signed difference between median available-memory samples. Other Windows activity can affect this change, so selected usage is not guaranteed savings.
+
+## Build
+
+The repository pins .NET SDK **9.0.318**. It uses C#, WPF, Win32 interop, and no external NuGet packages.
+
+```powershell
+./build.ps1
+./build.ps1 -Test
+```
+
+The second command runs the disposable Windows fixture suite. Teardown may terminate only a test-owned refusing fixture; production code has no force-kill path. The included CI template builds every project and runs checks that do not need interactive fixtures. It is not yet active in GitHub Actions. See [validation results](docs/VALIDATION.md).
+
+```text
+src/GameFromHome/           Native UI, icons, preferences, shortcuts
+src/GameFromHome.Core/      Discovery, identity, RAM, shutdown, verification
+tests/GameFromHome.Tests/   Regression harness
+tests/GameFromHome.Fixture/ Disposable Windows test applications
+docs/                      Design, architecture, validation, social assets
+```
+
+## Roadmap
+
+- Move to .NET 10 LTS before .NET 9 support ends on 10 November 2026.
+- Broader Store-app and third-party version validation.
+- Better handling for apps that decline cooperative shutdown.
+- Full light-theme and dynamic high-contrast polish.
+- Signed and self-contained distribution.
+
+## Sharing
+
+The custom GitHub Open Graph card lives at [`docs/assets/social-preview.png`](docs/assets/social-preview.png). GitHub repository **Settings → Social preview** must use that image. Committing it or adding HTML meta tags to a README does not configure GitHub's shared-link preview.
+
+## License
+
+[MIT](LICENSE). Generated app artwork and the social card are included; see [asset notes](docs/ASSETS.md). Third-party app icons in the screenshot belong to their respective owners.

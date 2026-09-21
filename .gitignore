@@ -1,0 +1,10 @@
+**/bin/
+**/obj/
+.build/
+*.user
+*.suo
+artifacts/
+*.lnk
+preferences.json
+last-run.json
+gfh-diagnostics.json
