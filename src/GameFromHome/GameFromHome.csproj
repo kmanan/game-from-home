@@ -1,1 +1,25 @@
-<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>WinExe</OutputType><TargetFramework>net9.0-windows</TargetFramework><UseWPF>true</UseWPF><ApplicationIcon>Assets/App.ico</ApplicationIcon><AssemblyName>GameFromHome</AssemblyName><Version>0.2.3</Version><ApplicationManifest>app.manifest</ApplicationManifest></PropertyGroup><ItemGroup><ProjectReference Include="../GameFromHome.Core/GameFromHome.Core.csproj"/><Resource Include="Assets/App.png"/></ItemGroup></Project>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <ApplicationIcon>Assets/App.ico</ApplicationIcon>
+    <AssemblyName>GameFromHome</AssemblyName>
+    <Version>0.2.4</Version>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../GameFromHome.Core/GameFromHome.Core.csproj" />
+    <Resource Include="Assets/App.png" />
+  </ItemGroup>
+  <!-- Prefer the Desktop Runtime download when both desktop and core runtimes are missing.
+       Keep both framework requirements and their SDK-selected versions intact. -->
+  <Target Name="PreferDesktopRuntimePrompt" BeforeTargets="_GenerateRuntimeConfigurationFilesInputCache" DependsOnTargets="ResolveFrameworkReferences">
+    <ItemGroup>
+      <_GameFromHomeCoreFramework Include="@(RuntimeFramework)" Condition="'%(Identity)' == 'Microsoft.NETCore.App'" />
+      <RuntimeFramework Remove="Microsoft.NETCore.App" />
+      <RuntimeFramework Include="@(_GameFromHomeCoreFramework)" />
+      <_GenerateRuntimeConfigurationPropertyInputsCacheToHash Include="@(RuntimeFramework->'%(Identity)%(Version)')" />
+    </ItemGroup>
+  </Target>
+</Project>

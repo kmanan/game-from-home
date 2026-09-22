@@ -15,5 +15,5 @@ if ($Test) {
     & './tests/GameFromHome.Tests/bin/Release/net9.0-windows/GameFromHome.Tests.exe' './tests/GameFromHome.Fixture/bin/Release/net9.0-windows/GameFromHome.Fixture.exe'
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 }
-dotnet publish 'src/GameFromHome/GameFromHome.csproj' -c Release --no-restore --self-contained false -o 'artifacts/windows-x64' --nologo
+dotnet publish 'src/GameFromHome/GameFromHome.csproj' -c Release -p:PublishProfile=Portable -o 'artifacts/portable-win-x64' --nologo
 exit $LASTEXITCODE

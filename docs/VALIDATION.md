@@ -1,3 +1,15 @@
+# v0.2.4 single-file startup verification
+
+Validated on Windows 11 x64, 22 September 2026. Release build and single-file publish passed with zero warnings/errors. The distributed EXE is 505,416 bytes. Only that EXE was copied to a separate folder for startup verification; no companion DLL, runtimeconfig, or deps files were present.
+
+- Installed .NET 9 Desktop Runtime: the exact release EXE rendered the native UI with live process/memory data; icons and core discovery loaded successfully.
+- Empty runtime location (no host): native download dialog appeared and cancellation exited without starting the app.
+- Host present, no frameworks: native dialog requested Microsoft.WindowsDesktop.App 9.0.0 x64.
+- Core runtime present without Desktop Runtime: native dialog requested Microsoft.WindowsDesktop.App 9.0.0 x64.
+- Both the no-host and missing-framework download URLs resolved with HTTP 200 to Microsoft's x64 .NET 9.0.20 Desktop Runtime installer page.
+
+Missing-runtime checks used only child-process DOTNET_ROOT overrides and isolated folders; installed runtimes and machine environment variables were not changed. Dialogs were inspected and cancelled; no runtime was installed and no user app was closed. Installing the runtime through the prompt on a clean Windows VM was not tested. The user must reopen the app after runtime installation. Existing app-closure logic is unchanged from the earlier regression suite below.
+
 # v0.2.3 interface and window verification
 
 Release build passed with zero warnings/errors. Native screenshot confirms the search field is removed. During an eight-second normal-start observation, the app owned exactly one visible window; a duplicate launch exited without creating a window. Screenshot capture now renders offscreen without a taskbar entry or activation; native window bounds verified it stayed offscreen. The user-reported blank popup was not reproduced during normal startup, so its source remains unconfirmed. No user applications were closed during these checks.

@@ -21,3 +21,7 @@ The claude-mem adapter reads the default per-user worker PID file. It requires a
 ## Reporting and preferences
 
 System RAM change is the signed difference between median available-memory samples. It is not a sum of selected process memory and can be negative due to other activity. Atomic JSON files in LocalAppData store selections and the last cleanup report. Installation identity changes require review. No telemetry is sent.
+
+## Single-file distribution (v0.2.4)
+
+The Portable publish profile targets win-x64 and bundles app assemblies into one framework-dependent EXE. The runtime is not bundled. Microsoft's native WinExe apphost detects missing runtimes before managed startup and supplies the download dialog. Both WindowsDesktop and NETCore framework requirements are preserved; the application project orders WindowsDesktop first so a machine missing both is directed to the Desktop installer, which includes the core runtime. This ordering is included in the SDK runtime-configuration input hash to avoid stale incremental build output. There is no custom downloader or silent installer. SDK single-file analysis/build tooling is restored from the official NuGet feed; the application has no third-party runtime packages.

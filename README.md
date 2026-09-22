@@ -1,7 +1,7 @@
 <p align="center"><img src="docs/assets/app-icon.png" width="112" alt="Game From Home icon"></p>
 <h1 align="center">Game From Home</h1>
 <p align="center"><strong>Make room for play.</strong><br>Clean app exits. More available RAM.</p>
-<p align="center"><a href="https://github.com/kmanan/game-from-home/releases/tag/v0.2.3">Download for Windows</a> · <a href="docs/ARCHITECTURE.md">How it works</a> · <a href="docs/SPEC.md">Product spec</a> · <a href="LICENSE">MIT license</a></p>
+<p align="center"><a href="https://github.com/kmanan/game-from-home/releases/tag/v0.2.4">Download for Windows</a> · <a href="docs/ARCHITECTURE.md">How it works</a> · <a href="docs/SPEC.md">Product spec</a> · <a href="LICENSE">MIT license</a></p>
 
 Game From Home is a small, on-demand Windows utility for the moment you want to stop working and start playing. See which everyday apps are using RAM, close a remembered selection with one button, and see the measured change in available memory.
 
@@ -26,9 +26,11 @@ It does not manage game libraries, change priorities, stop drivers, purge caches
 
 ## Download and run
 
-Get **[GameFromHome-windows-x64.zip](https://github.com/kmanan/game-from-home/releases/download/v0.2.3/GameFromHome-windows-x64.zip)** from the [v0.2.3 release](https://github.com/kmanan/game-from-home/releases/tag/v0.2.3). Extract the complete folder and open `GameFromHome.exe`.
+Download **[GameFromHome.exe](https://github.com/kmanan/game-from-home/releases/download/v0.2.4/GameFromHome.exe)** and double-click it. No ZIP extraction, companion DLLs, or app installer is needed.
 
-This initial build requires **Windows x64 and the .NET 9 Desktop Runtime**. It has no installer, but it is not fully self-contained: companion files must stay together, and settings live in `%LOCALAPPDATA%\GameFromHome`. The runtime is available from [Microsoft](https://dotnet.microsoft.com/en-us/download/dotnet/9.0). This release is unsigned.
+Requires **Windows x64**. If the **.NET 9 Desktop Runtime (x64)** is installed, the app opens normally. If a compatible runtime is missing, Microsoft's native launcher shows a download prompt. Install the runtime from the linked Microsoft page, then reopen Game From Home. The runtime installation is a one-time prerequisite shared with other .NET 9 desktop apps; the launcher does not install it silently or automatically reopen the app.
+
+This is a **single-file, framework-dependent app**, not a self-contained bundle. Settings remain in `%LOCALAPPDATA%\GameFromHome`; moving the EXE does not carry settings to another PC. The release is unsigned. [Manual runtime download](https://dotnet.microsoft.com/en-us/download/dotnet/9.0) · [Microsoft's launch-prompt documentation](https://learn.microsoft.com/en-us/dotnet/core/runtime-discovery/troubleshoot-app-launch).
 
 Review the selected apps and press **Free up RAM**. The selection is remembered. New or changed installations require review before entering the saved selection.
 
@@ -58,7 +60,7 @@ With no saved selection, this opens the review screen. Successful results can cl
 
 `ChatGPT.exe` inside a Codex package is identified as **Codex**. Generic Node, Bun, Python, shell, and WSL processes without a supported clean-exit method are excluded from the cleanup list. App-owned Codex runtime helpers are grouped through verified ancestry and the Codex installation path. A standalone Codex CLI remains a separate runtime. Hover a row for executable paths and process IDs.
 
-**v0.2.3 keeps the cleanup list focused on actionable apps over 500 MB.** Controlled tests cover normal apps, hidden apps, vetoed shutdowns, protected identities, and remaining children. Individual versions of every third-party app have not been closed as part of validation. Each app controls how it handles Windows shutdown requests; Game From Home checks and reports the outcome. It does not provide universal session backup or restore.
+**v0.2.4 keeps the cleanup list focused on actionable apps over 500 MB.** Controlled tests cover normal apps, hidden apps, vetoed shutdowns, protected identities, and remaining children. Individual versions of every third-party app have not been closed as part of validation. Each app controls how it handles Windows shutdown requests; Game From Home checks and reports the outcome. It does not provide universal session backup or restore.
 
 ## How clean exit works
 
@@ -79,7 +81,7 @@ The repository pins .NET SDK **9.0.318**. It uses C#, WPF, Win32 interop, and no
 ./build.ps1 -Test
 ```
 
-The second command runs the disposable Windows fixture suite. Teardown may terminate only a test-owned refusing fixture; production code has no force-kill path. The included CI template builds every project and runs checks that do not need interactive fixtures. It is not yet active in GitHub Actions. See [validation results](docs/VALIDATION.md). **35 regression checks passed** for the underlying v0.2.0 shutdown implementation; subsequent display-only changes are checked separately.
+The build publishes a single `artifacts/portable-win-x64/GameFromHome.exe` using the `Portable` publish profile. The second command also runs the disposable Windows fixture suite. Teardown may terminate only a test-owned refusing fixture; production code has no force-kill path. The included CI template builds every project and runs checks that do not need interactive fixtures. It is not yet active in GitHub Actions. See [validation results](docs/VALIDATION.md). **35 regression checks passed** for the underlying v0.2.0 shutdown implementation; subsequent display-only changes are checked separately.
 
 ```text
 src/GameFromHome/           Native UI, icons, preferences, shortcuts
@@ -91,7 +93,7 @@ docs/                      Design, architecture, validation, social assets
 
 ## Updating from v0.1.0
 
-Replace the extracted app files with this release. Existing profiles are retained, but the expanded installation fingerprint requires one review of previously selected apps. Codex and newly discovered apps are not silently added to your cleanup.
+Use the new single EXE in place of the previous extracted app. Existing companion files are no longer required. Existing profiles are retained, but the expanded installation fingerprint requires one review of previously selected apps. Codex and newly discovered apps are not silently added to your cleanup.
 
 ## Roadmap
 
@@ -99,7 +101,7 @@ Replace the extracted app files with this release. Existing profiles are retaine
 - Broader Store-app and third-party version validation.
 - Better handling for apps that decline cooperative shutdown.
 - Full light-theme and dynamic high-contrast polish.
-- Signed and self-contained distribution.
+- Signed distribution; optional self-contained download for offline use.
 
 ## Sharing
 
